@@ -7,7 +7,7 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const URI = process.env.MONGODB_URI || 'mongodb+srv://r62399sumit_db_user:9NTFsqSKdj7jsUtF@cluster0.kjzmsae.mongodb.netmongodb+srv://r62399sumit_db_user:9NTFsqSKdj7jsUtF@cluster0.kjzmsae.mongodb.net';
+const URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/hotel_management';
 
 // Connection ek baar banta hai aur dobara use hota hai (serverless ke liye zaroori)
 let connecting;
