@@ -7,12 +7,29 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+const URI = process.env.MONGODB_URI || 'mongodb+srv://r62399sumit_db_user:9NTFsqSKdj7jsUtF@cluster0.kjzmsae.mongodb.netmongodb+srv://r62399sumit_db_user:9NTFsqSKdj7jsUtF@cluster0.kjzmsae.mongodb.net';
+
+// Connection ek baar banta hai aur dobara use hota hai (serverless ke liye zaroori)
+let connecting;
+function connectDB() {
+  if (!connecting) {
+    connecting = mongoose.connect(URI, { serverSelectionTimeoutMS: 8000 }).catch((err) => {
+      connecting = null;
+      throw err;
+    });
+  }
+  return connecting;
+}
+
+app.use('/api', async (req, res, next) => {
+  try { await connectDB(); next(); } catch (err) { next(err); }
+});
+
 app.use('/api/rooms', require('./routes/rooms'));
 app.use('/api/guests', require('./routes/guests'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/stats', require('./routes/stats'));
 
-// Central error handler
 app.use((err, req, res, next) => {
   let status = err.status || 500;
   let message = err.message;
@@ -25,16 +42,18 @@ app.use((err, req, res, next) => {
   res.status(status).json({ error: message });
 });
 
-const PORT = process.env.PORT || 3000;
-const URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/hotel_management';
+module.exports = app;
 
-mongoose
-  .connect(URI)
-  .then(() => {
-    console.log('MongoDB connected');
-    app.listen(PORT, () => console.log(`Hotel desk running at http://localhost:${PORT}`));
-  })
-  .catch((err) => {
-    console.error('MongoDB connection failed:', err.message);
-    process.exit(1);
-  });
+// Local run: npm start
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  connectDB()
+    .then(() => {
+      console.log('MongoDB connected');
+      app.listen(PORT, () => console.log(`Hotel desk running at http://localhost:${PORT}`));
+    })
+    .catch((err) => {
+      console.error('MongoDB connection failed:', err.message);
+      process.exit(1);
+    });
+}
